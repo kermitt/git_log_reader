@@ -88,7 +88,7 @@ def create_connection(db_file):
 def get_repo_names(conn):
     cur = conn.cursor()
     #cur.execute("select repo_name from repo_names where repo_name = 'cms-api'")
-    cur.execute("select repo_name from repo_names limit 3")
+    cur.execute("select repo_name from repo_names")
     rows = cur.fetchall()
     return rows
 
@@ -115,7 +115,12 @@ def main():
     conn = create_connection(database)
 
     repo_names = get_repo_names(conn)
+
+    total_repos = 0
+    total_branches = 0
+
     for tuple_contains_repo_name in repo_names:
+        total_repos += 1
         repo_name = tuple_contains_repo_name[0]
         # cd
         cd(basepath + repo_name)
@@ -138,15 +143,19 @@ def main():
             branches.add(x)
 
         for branch in branches:
+            total_branches += 1
             git_checkout(branch)
                 
             results = git_log(basepath + repo_name)
             lines = results.stdout.splitlines()
             #print("|{0}| has {1}".format(branch, len(lines)))
             parseGitLog_insertIntoDB(lines, repo_name, branch, conn)
+    print("{0} total repositories".format(total_repos))
+    print("{0} total branches".format(total_branches))
 
 if __name__ == '__main__':
     main()    
+    print("The end")
     
     
     
