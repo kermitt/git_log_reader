@@ -59,12 +59,12 @@ def parseGitLog_insertIntoDB(lines, repo_name, branch, conn):
                 #print("|{0}| >{1}<  {3}".format(repo_name, an_author, then, days_ago))
     print("{0} for {1} ".format(entry_count, repo_name))
 
-def gitBranchAll():
+def git_branch_all():
     pwd = subprocess.check_output(['pwd'])
     branches = subprocess.run(['git', 'branch', '-a'], stdout=subprocess.PIPE)
     return branches
 
-def gitCheckout(repo):
+def git_checkout(repo):
     subprocess.run(['git', 'checkout', repo], stdout=subprocess.PIPE)
 
         
@@ -88,15 +88,10 @@ def create_connection(db_file):
 def get_repo_names(conn):
     cur = conn.cursor()
     #cur.execute("select repo_name from repo_names where repo_name = 'cms-api'")
-    cur.execute("select repo_name from repo_names")
+    cur.execute("select repo_name from repo_names limit 3")
     rows = cur.fetchall()
     return rows
 
-def maybeCreateACommit(couldBeNewCommitBlock, candidate_line):
-    # mini state machine 
-    if couldBeNewCommitBlock.startswith( 'commit ' ): 
-        commits[couldBeNewCommitBlock] = {} 
-    
 # param: string such as "Mon Jun 26 14:26:35 2017 -0700"
 # i.e., EEE MMM d HH:mm:ss yyyy Z
 def getDateObject_fromString(ugly_format):
@@ -125,7 +120,7 @@ def main():
         # cd
         cd(basepath + repo_name)
         # branches
-        raw_branches = gitBranchAll().stdout.splitlines()
+        raw_branches = git_branch_all().stdout.splitlines()
 
         print("----------------------------------:REPO:  {0}".format(repo_name))
         branches = set()
@@ -143,14 +138,12 @@ def main():
             branches.add(x)
 
         for branch in branches:
-            gitCheckout(branch)
+            git_checkout(branch)
                 
             results = git_log(basepath + repo_name)
             lines = results.stdout.splitlines()
             #print("|{0}| has {1}".format(branch, len(lines)))
             parseGitLog_insertIntoDB(lines, repo_name, branch, conn)
-
-   
 
 if __name__ == '__main__':
     main()    
